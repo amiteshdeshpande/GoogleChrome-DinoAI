@@ -1,0 +1,38 @@
+<annotation>
+	<folder>Screenshots_Train</folder>
+	<filename>12.png</filename>
+	<path>H:\College\Spring 2019\Game AI CS5150\Project\Screenshots_Train\12.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>1920</width>
+		<height>1080</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>dino</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>79</xmin>
+			<ymin>596</ymin>
+			<xmax>216</xmax>
+			<ymax>740</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>cactus-3</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>470</xmin>
+			<ymin>632</ymin>
+			<xmax>635</xmax>
+			<ymax>745</ymax>
+		</bndbox>
+	</object>
+</annotation>
