@@ -2,8 +2,8 @@ import time
 
 import cv2 as cv
 import tensorflow as tf
+import numpy as np
 
-# from src import LearningAgent
 
 DINO_CLASS_ID = 1
 CACTUS_SMALL_CLASS_ID = 2
@@ -45,6 +45,8 @@ class Detector:
         tensor_detection_boxes = sess.graph.get_tensor_by_name('detection_boxes:0')
         tensor_detection_classes = sess.graph.get_tensor_by_name('detection_classes:0')
 
+        frame = cv.imread(frame)
+        frame = np.array(frame)
         img = frame
         rows = img.shape[0]
         cols = img.shape[1]
