@@ -129,10 +129,10 @@ class Detector:
         # print('Reading to np took {} seconds'.format(time.time() - start_time))
         # Run the model
 
-        start_time = time.time()
+        # start_time = time.time()
         out = sess.run([tensor_num_detections, tensor_detection_scores, tensor_detection_boxes, tensor_detection_classes],
                        feed_dict={'image_tensor:0': inp.reshape(1, inp.shape[0], inp.shape[1], 3)})
-        print('Run model took {} seconds'.format(time.time() - start_time))
+        # print('Run model took {} seconds'.format(time.time() - start_time))
         # Visualize detected bounding boxes.
         start_time = time.time()
         num_detections = int(out[0][0])
@@ -208,9 +208,11 @@ game = GameModule.GameModule()
 # time.sleep(3)
 dino = DinoAgent.DinoAgent(game=game)
 
-# Initialize the Weight and rho variables (Can load from memory as well)
-Weight = np.zeros((3,4,4),dtype=float)
-rho = 0.8
+f = open("Checkpoints/rho.pickle","rb")
+un = pickle.Unpickler(f)
+rho = un.load()
+f.close()
+Weight = np.load('Checkpoints/weight_matrix.npy')
 
 # Q-Learning implementation
 while s<step:
@@ -221,22 +223,18 @@ while s<step:
     image = pyautogui.screenshot()
     obstacle = d.run_detection(sess=sess,frame=image)
     new_environment = create_environment(obstacle)
-
+    # print(new_environment)
+    # MOVE = 0
     r = random()
     SELECT_MOVE = 0
     maxQ = 0
-    if r < rho:
-        CURR_MOVE = randint(0, 2)
-        # print(CURR_MOVE)
-        SELECT_MOVE = CURR_MOVE
-    else:
-        for i in range(POSSIBLE_MOVES):
-            qUsingWidrowhoff = 0
-            qUsingWidrowhoff = generate_Q_using_widhrowhoff(environment,i)
-            # print(qUsingWidrowhoff)
-            if qUsingWidrowhoff > maxQ:
-                maxQ = qUsingWidrowhoff
-                SELECT_MOVE = i
+    for i in range(3):
+        qUsingWidrowhoff = 0
+        qUsingWidrowhoff = generate_Q_using_widhrowhoff(environment,i)
+        print(qUsingWidrowhoff)
+        if qUsingWidrowhoff > maxQ:
+            maxQ = qUsingWidrowhoff
+            SELECT_MOVE = i
 
     if SELECT_MOVE == JUMP:
         dino.jump()
@@ -264,7 +262,7 @@ while s<step:
         reward = 0.01*score
 
     bestmaxQ = 0
-    for i in range(POSSIBLE_MOVES):
+    for i in range(3):
         bestNextQ = 0
         bestNextQ = generate_Q_using_widhrowhoff(new_environment,i)
         if bestNextQ > bestmaxQ:
@@ -273,21 +271,6 @@ while s<step:
     idealQ = reward + (DISCOUNT_FACTOR * bestmaxQ)
     error = idealQ - generate_Q_using_widhrowhoff(environment,SELECT_MOVE)
 
-    for j in range(4):
-        for k in range(4):
-            if environment[j][k]==1:
-                env_value = 1
-            else:
-                env_value = -1      ## Check this part
-            Weight[SELECT_MOVE][j][k] = Weight[SELECT_MOVE][j][k] + (LEARNING_RATE * error * env_value)
-
-    if s%100 == 0:
-        np.save('Checkpoints/weight_matrix.npy', Weight)
-        # print((str)(s))
-        f_out = open("Checkpoints/rho.pickle","wb")
-        pickle.dump(rho,f_out)
-        f_out.close()
-    # print(Weight)
     environment = new_environment
     # print('Run model took {} seconds'.format(time.time() - start_time))
 

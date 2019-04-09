@@ -9,7 +9,7 @@ def process_img(image):
     original_image = image
     # convert to opencv
     processed_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    processed_img = cv2.resize(processed_img, (0, 0), fx=0.5, fy=0.5)
+    #processed_img = cv2.resize(processed_img, (0, 0), fx=0.5, fy=0.5)
     # convert to gray
     processed_img = cv2.cvtColor(processed_img, cv2.COLOR_BGR2GRAY)
     # edge detection

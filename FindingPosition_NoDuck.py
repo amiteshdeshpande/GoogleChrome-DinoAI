@@ -27,16 +27,15 @@ GAME_OVER_CLASS_ID = 8
 # Variables for POSSIBLE MOVES
 STAY = 0
 JUMP = 1
-DUCK = 2
-POSSIBLE_MOVES = 3
+POSSIBLE_MOVES = 2
 # Reward
 reward = 0
 
 # Steps to run for training
-step = 250000
+step = 1000
 s = 0
 # Hyperparameters for Reinforcement Learning (Q-Learning)
-DISCOUNT_FACTOR = 0.3
+DISCOUNT_FACTOR = 0.1
 LEARNING_RATE = 0.01
 
 # Initialize environments
@@ -129,10 +128,10 @@ class Detector:
         # print('Reading to np took {} seconds'.format(time.time() - start_time))
         # Run the model
 
-        start_time = time.time()
+        # start_time = time.time()
         out = sess.run([tensor_num_detections, tensor_detection_scores, tensor_detection_boxes, tensor_detection_classes],
                        feed_dict={'image_tensor:0': inp.reshape(1, inp.shape[0], inp.shape[1], 3)})
-        print('Run model took {} seconds'.format(time.time() - start_time))
+        # print('Run model took {} seconds'.format(time.time() - start_time))
         # Visualize detected bounding boxes.
         start_time = time.time()
         num_detections = int(out[0][0])
@@ -209,29 +208,31 @@ game = GameModule.GameModule()
 dino = DinoAgent.DinoAgent(game=game)
 
 # Initialize the Weight and rho variables (Can load from memory as well)
-Weight = np.zeros((3,4,4),dtype=float)
+Weight = np.zeros((2,4,4),dtype=float)
 rho = 0.8
 
 # Q-Learning implementation
 while s<step:
     start_time = time.time()
     s+=1
-    if s%100 == 0 and rho > 0.02:
+
+    if s%700 == 0 and rho > 0.02:
         rho -= 0.01
+
     image = pyautogui.screenshot()
     obstacle = d.run_detection(sess=sess,frame=image)
     new_environment = create_environment(obstacle)
 
     r = random()
     SELECT_MOVE = 0
-    maxQ = 0
-    if r < rho:
-        CURR_MOVE = randint(0, 2)
+    maxQ = -100.0
+    if r < rho and s < 700:
+        CURR_MOVE = randint(0, 1)
         # print(CURR_MOVE)
         SELECT_MOVE = CURR_MOVE
     else:
         for i in range(POSSIBLE_MOVES):
-            qUsingWidrowhoff = 0
+            # qUsingWidrowhoff = 0
             qUsingWidrowhoff = generate_Q_using_widhrowhoff(environment,i)
             # print(qUsingWidrowhoff)
             if qUsingWidrowhoff > maxQ:
@@ -241,31 +242,33 @@ while s<step:
     if SELECT_MOVE == JUMP:
         dino.jump()
         # time.sleep(0.3)
-    elif SELECT_MOVE == DUCK:
-        dino.duck()
-        # time.sleep(0.3)
 
     if dino.is_crashed():
         score = game.get_score()
-        reward = -10/score
-        #print('Score='+ (str)(score))
-        f_in = open("Checkpoints/Highscore.pickle","rb")
+        if SELECT_MOVE == STAY:
+            reward = -10.0
+        elif SELECT_MOVE == JUMP:
+            reward = -2.0
+        # print('Score='+ (str)(score))
+        f_in = open("Checkpoints/Highscore_NoDuck.pickle","rb")
         un = pickle.Unpickler(f_in)
         Highscore = un.load()
         f_in.close()
         if Highscore < score:
-            f_out = open("Checkpoints/Highscore.pickle","wb")
+            f_out = open("Checkpoints/Highscore_NoDuck.pickle","wb")
             pickle.dump(score,f_out)
             f_out.close()
         game.restart()
 
     else:
-        score = game.get_score()
-        reward = 0.01*score
+        if SELECT_MOVE == STAY:
+            reward = 0.3
+        elif SELECT_MOVE == JUMP:
+            reward = 0.1
 
-    bestmaxQ = 0
+    bestmaxQ = -100.0
     for i in range(POSSIBLE_MOVES):
-        bestNextQ = 0
+        bestNextQ = 0.0
         bestNextQ = generate_Q_using_widhrowhoff(new_environment,i)
         if bestNextQ > bestmaxQ:
             bestmaxQ = bestNextQ
@@ -278,13 +281,13 @@ while s<step:
             if environment[j][k]==1:
                 env_value = 1
             else:
-                env_value = -1      ## Check this part
+                env_value = -1
             Weight[SELECT_MOVE][j][k] = Weight[SELECT_MOVE][j][k] + (LEARNING_RATE * error * env_value)
 
     if s%100 == 0:
-        np.save('Checkpoints/weight_matrix.npy', Weight)
+        np.save('Checkpoints/weight_matrix_noDuck.npy', Weight)
         # print((str)(s))
-        f_out = open("Checkpoints/rho.pickle","wb")
+        f_out = open("Checkpoints/rho_noDuck.pickle","wb")
         pickle.dump(rho,f_out)
         f_out.close()
     # print(Weight)

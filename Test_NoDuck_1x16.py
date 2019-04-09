@@ -40,8 +40,8 @@ DISCOUNT_FACTOR = 0.3
 LEARNING_RATE = 0.01
 
 # Initialize environments
-environment = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-new_environment = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+environment = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+new_environment = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
 
 # Method to return the graph of trained model
 def setup_detection_environment():
@@ -62,43 +62,40 @@ def start_session(graph_def):
 # Method to return an environment based on the object detection in a screenshot of game
 def create_environment(obstacle):
 
-    env = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-    if 400 <= obstacle[1] < 500:
-        if 200 <= obstacle[0] < 400:
+    env = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+    if 300 <= obstacle[1] < 900:
+        if 200 <= obstacle[0] < 300:
             env[0][0] = 1
-        elif 400 <= obstacle[0] < 600:
+        elif 300 <= obstacle[0] < 400:
             env[0][1] = 1
-        elif 600 <= obstacle[0] < 800:
+        elif 400 <= obstacle[0] < 500:
             env[0][2] = 1
-        elif 800 <= obstacle[0] < 1000:
+        elif 500 <= obstacle[0] < 600:
             env[0][3] = 1
-    elif 500 <= obstacle[1] < 600:
-        if 200 <= obstacle[0] < 400:
-            env[1][0] = 1
-        elif 400 <= obstacle[0] < 600:
-            env[1][1] = 1
-        elif 600 <= obstacle[0] < 800:
-            env[1][2] = 1
-        elif 800 <= obstacle[0] < 1000:
-            env[1][3] = 1
-    elif 600 <= obstacle[1] < 700:
-        if 200 <= obstacle[0] < 400:
-            env[2][0] = 1
-        elif 400 <= obstacle[0] < 600:
-            env[2][1] = 1
-        elif 600 <= obstacle[0] < 800:
-            env[2][2] = 1
-        elif 800 <= obstacle[0] < 1000:
-            env[2][3] = 1
-    elif 700 <= obstacle[1] < 800:
-        if 200 <= obstacle[0] < 400:
-            env[3][0] = 1
-        elif 400 <= obstacle[0] < 600:
-            env[3][1] = 1
-        elif 600 <= obstacle[0] < 800:
-            env[3][2] = 1
-        elif 800 <= obstacle[0] < 1000:
-            env[3][3] = 1
+        elif 600 <= obstacle[0] < 700:
+            env[0][4] = 1
+        elif 700 <= obstacle[0] < 800:
+            env[0][5] = 1
+        elif 800 <= obstacle[0] < 900:
+            env[0][6] = 1
+        elif 900 <= obstacle[0] < 1000:
+            env[0][7] = 1
+        elif 1000 <= obstacle[0] < 1100:
+            env[0][8] = 1
+        elif 1100 <= obstacle[0] < 1200:
+            env[0][9] = 1
+        elif 1200 <= obstacle[0] < 1300:
+            env[0][10] = 1
+        elif 1300 <= obstacle[0] < 1400:
+            env[0][11] = 1
+        elif 1400 <= obstacle[0] < 1500:
+            env[0][12] = 1
+        elif 1500 <= obstacle[0] < 1600:
+            env[0][13] = 1
+        elif 1600 <= obstacle[0] < 1700:
+            env[0][14] = 1
+        elif 1700 <= obstacle[0] < 1800:
+            env[0][15] = 1
 
     return env
 
@@ -129,10 +126,10 @@ class Detector:
         # print('Reading to np took {} seconds'.format(time.time() - start_time))
         # Run the model
 
-        start_time = time.time()
+        # start_time = time.time()
         out = sess.run([tensor_num_detections, tensor_detection_scores, tensor_detection_boxes, tensor_detection_classes],
                        feed_dict={'image_tensor:0': inp.reshape(1, inp.shape[0], inp.shape[1], 3)})
-        print('Run model took {} seconds'.format(time.time() - start_time))
+        # print('Run model took {} seconds'.format(time.time() - start_time))
         # Visualize detected bounding boxes.
         start_time = time.time()
         num_detections = int(out[0][0])
@@ -188,8 +185,8 @@ class Detector:
 
 def generate_Q_using_widhrowhoff(environment,action):
     derivedQ = 0.0
-    for j in range(4):
-        for k in range(4):
+    for j in range(1):
+        for k in range(16):
             if environment[j][k]==1:
                 env_value = 1
             else:
@@ -208,46 +205,33 @@ game = GameModule.GameModule()
 # time.sleep(3)
 dino = DinoAgent.DinoAgent(game=game)
 
-# Initialize the Weight and rho variables (Can load from memory as well)
-Weight = np.zeros((3,4,4),dtype=float)
-rho = 0.8
+Weight = np.load('Checkpoints/weight_matrix_noDuck_1x16.npy')
+# Weight = np.load('Checkpoints/weight_test.npy')
 
 # Q-Learning implementation
 while s<step:
-    start_time = time.time()
-    s+=1
-    if s%100 == 0 and rho > 0.02:
-        rho -= 0.01
     image = pyautogui.screenshot()
     obstacle = d.run_detection(sess=sess,frame=image)
     new_environment = create_environment(obstacle)
 
-    r = random()
+    # print(environment)
+
     SELECT_MOVE = 0
-    maxQ = 0
-    if r < rho:
-        CURR_MOVE = randint(0, 2)
-        # print(CURR_MOVE)
-        SELECT_MOVE = CURR_MOVE
-    else:
-        for i in range(POSSIBLE_MOVES):
-            qUsingWidrowhoff = 0
-            qUsingWidrowhoff = generate_Q_using_widhrowhoff(environment,i)
-            # print(qUsingWidrowhoff)
-            if qUsingWidrowhoff > maxQ:
-                maxQ = qUsingWidrowhoff
-                SELECT_MOVE = i
+    maxQ = -100
+    for i in range(2):
+        qUsingWidrowhoff = 0
+        qUsingWidrowhoff = generate_Q_using_widhrowhoff(environment,i)
+        print(qUsingWidrowhoff)
+        if qUsingWidrowhoff > maxQ:
+            maxQ = qUsingWidrowhoff
+            SELECT_MOVE = i
 
     if SELECT_MOVE == JUMP:
+        print("Jumped")
         dino.jump()
-        # time.sleep(0.3)
-    elif SELECT_MOVE == DUCK:
-        dino.duck()
-        # time.sleep(0.3)
 
     if dino.is_crashed():
         score = game.get_score()
-        reward = -10/score
         #print('Score='+ (str)(score))
         f_in = open("Checkpoints/Highscore.pickle","rb")
         un = pickle.Unpickler(f_in)
@@ -259,35 +243,6 @@ while s<step:
             f_out.close()
         game.restart()
 
-    else:
-        score = game.get_score()
-        reward = 0.01*score
-
-    bestmaxQ = 0
-    for i in range(POSSIBLE_MOVES):
-        bestNextQ = 0
-        bestNextQ = generate_Q_using_widhrowhoff(new_environment,i)
-        if bestNextQ > bestmaxQ:
-            bestmaxQ = bestNextQ
-
-    idealQ = reward + (DISCOUNT_FACTOR * bestmaxQ)
-    error = idealQ - generate_Q_using_widhrowhoff(environment,SELECT_MOVE)
-
-    for j in range(4):
-        for k in range(4):
-            if environment[j][k]==1:
-                env_value = 1
-            else:
-                env_value = -1      ## Check this part
-            Weight[SELECT_MOVE][j][k] = Weight[SELECT_MOVE][j][k] + (LEARNING_RATE * error * env_value)
-
-    if s%100 == 0:
-        np.save('Checkpoints/weight_matrix.npy', Weight)
-        # print((str)(s))
-        f_out = open("Checkpoints/rho.pickle","wb")
-        pickle.dump(rho,f_out)
-        f_out.close()
-    # print(Weight)
     environment = new_environment
     # print('Run model took {} seconds'.format(time.time() - start_time))
 
